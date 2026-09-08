@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Haushaltsbuch</title>
 <style>
 :root{--bg:#f3f6fa;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--nav:#0f172a;--blue:#2563eb;--green:#15803d;--red:#dc2626;--amber:#d97706;--shadow:0 10px 28px rgba(15,23,42,.08)}
@@ -69,6 +73,7 @@ main{padding:24px;max-width:1500px;width:100%;margin:auto}.top{display:flex;just
       <div class="data-buttons"><button class="btn primary" id="exportJson">JSON-Backup exportieren</button><button class="btn soft" id="exportCsv">CSV für Excel exportieren</button><button class="btn soft" id="importBtn">JSON / CSV importieren</button><button class="btn danger" id="clearBtn">Alle Daten löschen</button></div>
       <input id="fileInput" type="file" accept=".json,.csv,application/json,text/csv" class="hidden">
       <div class="format-help">CSV-Spalten:<span class="code">ID;Typ;Datum;Betrag;Hauptkategorie;Unterkategorie;Beschreibung;Haendler;Zahlungsart</span></div>
+       <div class="format-help"><strong>Backup-Erinnerung:</strong> Nach Änderungen erinnert die App beim Beenden an eine JSON-Sicherung. Falls der Browser beim Schließen keinen Dialog zulässt, erfolgt die Nachfrage beim nächsten Start.</div>
     </article>
   </section>
 
@@ -104,12 +109,16 @@ main{padding:24px;max-width:1500px;width:100%;margin:auto}.top{display:flex;just
 var DB_NAME='HaushaltsbuchDB';
 var STORE='transactions';
 var LS_KEY='haushaltsbuch_fallback_v4';
+var BACKUP_PENDING_KEY='haushaltsbuch_backup_pending_v5';
+var LAST_BACKUP_KEY='haushaltsbuch_last_backup_v5';
 var MONTHLY_BUDGET=2700;
 var db=null;
 var storageMode='memory';
 var memoryData=[];
 var editingId=null;
 var bookingType='Ausgabe';
+var sessionDirty=false;
+var hasUserInteracted=false;
 
 var CATEGORIES={
  'Lebensmittel & Haushalt':['Lebensmittel','Drogerie','Mittagessen / Verpflegung','Haushaltswaren'],
@@ -128,6 +137,9 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 function money(v){try{return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number(v)||0)}catch(e){return (Number(v)||0).toFixed(2).replace('.',',')+' €'}}
 function uid(){return 'tx-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function markDirty(){sessionDirty=true;try{localStorage.setItem(BACKUP_PENDING_KEY,'1')}catch(e){}}
+function markBackedUp(){sessionDirty=false;try{localStorage.removeItem(BACKUP_PENDING_KEY);localStorage.setItem(LAST_BACKUP_KEY,new Date().toISOString())}catch(e){}}
+function backupPending(){try{return localStorage.getItem(BACKUP_PENDING_KEY)==='1'}catch(e){return sessionDirty}}
 
 function setStorageStatus(mode){
  storageMode=mode;
@@ -203,7 +215,7 @@ function setType(t){bookingType=t;$('typeExpense').classList.toggle('active',t==
 function saveBooking(){
  var amount=parseFloat(String($('amount').value).replace(',','.'));if(!amount||amount<=0){alert('Bitte einen Betrag größer 0 eingeben.');return}if(!$('date').value){alert('Bitte ein Datum auswählen.');return}
  var obj={id:editingId||uid(),type:bookingType,amount:amount,date:$('date').value,category:$('category').value,subcategory:$('subcategory').value,description:$('description').value.trim(),merchant:$('merchant').value.trim(),payment:$('payment').value,updatedAt:new Date().toISOString()};
- putOne(obj).then(function(){closeModal();renderAll()}).catch(function(e){alert('Speichern fehlgeschlagen: '+(e&&e.message?e.message:e))});
+ putOne(obj).then(function(){markDirty();closeModal();renderAll()}).catch(function(e){alert('Speichern fehlgeschlagen: '+(e&&e.message?e.message:e))});
 }
 
 function renderAll(){
@@ -216,25 +228,62 @@ function renderTable(items){var q=$('searchInput').value.toLowerCase().trim(),t=
 function switchPage(page){document.querySelectorAll('.page').forEach(function(p){p.classList.add('hidden')});$('page-'+page).classList.remove('hidden');document.querySelectorAll('[data-page]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')===page)});var titles={dashboard:['Dashboard','Dein Haushaltsbuch auf diesem Gerät.'],bookings:['Buchungen','Suchen, filtern, bearbeiten und löschen.'],data:['Import / Export','Daten sichern oder von einem anderen Gerät übernehmen.'],categories:['Kategorien','Übersicht der Haupt- und Unterkategorien.']};$('pageTitle').textContent=titles[page][0];$('pageSubtitle').textContent=titles[page][1]}
 
 function download(name,content,type){var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},500)}
-function exportJson(){getAll().then(function(items){download('haushaltsbuch-backup-'+today()+'.json',JSON.stringify({app:'Haushaltsbuch',version:4,exportedAt:new Date().toISOString(),transactions:items},null,2),'application/json')})}
+function exportJson(){return getAll().then(function(items){download('haushaltsbuch-backup-'+today()+'.json',JSON.stringify({app:'Haushaltsbuch',version:5,exportedAt:new Date().toISOString(),transactions:items},null,2),'application/json');markBackedUp();return true})}
 function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}
 function exportCsv(){getAll().then(function(items){var rows=[['ID','Typ','Datum','Betrag','Hauptkategorie','Unterkategorie','Beschreibung','Haendler','Zahlungsart']];items.forEach(function(x){rows.push([x.id,x.type,x.date,String(Number(x.amount||0).toFixed(2)).replace('.',','),x.category,x.subcategory,x.description||'',x.merchant||'',x.payment||''])});var text='\ufeff'+rows.map(function(r){return r.map(csvCell).join(';')}).join('\n');download('haushaltsbuch-'+today()+'.csv',text,'text/csv;charset=utf-8')})}
 function parseCsv(text){text=text.replace(/^\uFEFF/,'');var first=(text.split(/\r?\n/)[0]||''),delimiter=(first.split(';').length>=first.split(',').length)?';':',';var rows=[],row=[],cell='',quote=false;for(var i=0;i<text.length;i++){var ch=text[i];if(ch==='"'){if(quote&&text[i+1]==='"'){cell+='"';i++}else quote=!quote}else if(ch===delimiter&&!quote){row.push(cell);cell=''}else if((ch==='\n'||ch==='\r')&&!quote){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);rows.push(row);row=[];cell=''}else cell+=ch}if(cell||row.length){row.push(cell);rows.push(row)}return rows.filter(function(r){return r.some(function(c){return String(c).trim()!==''})})}
 function normAmount(v){if(typeof v==='number')return v;var s=String(v||'').trim().replace(/\s/g,'').replace(/€/g,'');if(s.indexOf(',')>=0){s=s.replace(/\./g,'').replace(',','.')}return Number(s)||0}
 function normalize(obj){var get=function(){for(var i=0;i<arguments.length;i++){var k=arguments[i];if(obj[k]!=null&&String(obj[k]).trim()!=='')return obj[k]}return''};var d=String(get('Datum','datum','Date','date')||today()).trim();if(/^\d{2}\.\d{2}\.\d{4}$/.test(d)){var p=d.split('.');d=p[2]+'-'+p[1]+'-'+p[0]}return{id:String(get('ID','id')||uid()),type:String(get('Typ','type')||'Ausgabe').trim()==='Einnahme'?'Einnahme':'Ausgabe',date:/^\d{4}-\d{2}-\d{2}/.test(d)?d.slice(0,10):today(),amount:normAmount(get('Betrag','betrag','amount')),category:String(get('Hauptkategorie','Kategorie','category')||'Sonstiges / Lifestyle').trim(),subcategory:String(get('Unterkategorie','subcategory')||'Sonstiges').trim(),description:String(get('Beschreibung','description')||'').trim(),merchant:String(get('Haendler','Händler','Händler/Empfänger','merchant')||'').trim(),payment:String(get('Zahlungsart','payment')||'Sonstiges').trim(),updatedAt:new Date().toISOString()}}
-function importFile(file){var reader=new FileReader();reader.onload=function(){try{var rows=[];if(file.name.toLowerCase().endsWith('.json')){var d=JSON.parse(reader.result);rows=Array.isArray(d)?d:(d.transactions||[])}else{var raw=parseCsv(reader.result);if(raw.length<2)throw new Error('Keine Datenzeilen gefunden');var headers=raw[0].map(function(h){return String(h).trim()});rows=raw.slice(1).map(function(r){var o={};headers.forEach(function(h,i){o[h]=r[i]||''});return o})}var items=rows.map(normalize).filter(function(x){return x.amount>0});if(!items.length)throw new Error('Keine gültigen Buchungen erkannt');var replace=confirm(items.length+' gültige Buchungen erkannt.\n\nOK = vorhandene Daten ersetzen\nAbbrechen = vorhandene Daten ergänzen');if(replace){replaceAll(items).then(renderAll)}else{Promise.all(items.map(putOne)).then(renderAll)}alert('Import abgeschlossen: '+items.length+' Buchungen.')}catch(e){alert('Import fehlgeschlagen: '+e.message)}$('fileInput').value=''};reader.readAsText(file,'utf-8')}
+function importFile(file){var reader=new FileReader();reader.onload=function(){try{var rows=[];if(file.name.toLowerCase().endsWith('.json')){var d=JSON.parse(reader.result);rows=Array.isArray(d)?d:(d.transactions||[])}else{var raw=parseCsv(reader.result);if(raw.length<2)throw new Error('Keine Datenzeilen gefunden');var headers=raw[0].map(function(h){return String(h).trim()});rows=raw.slice(1).map(function(r){var o={};headers.forEach(function(h,i){o[h]=r[i]||''});return o})}var items=rows.map(normalize).filter(function(x){return x.amount>0});if(!items.length)throw new Error('Keine gültigen Buchungen erkannt');var replace=confirm(items.length+' gültige Buchungen erkannt.\n\nOK = vorhandene Daten ersetzen\nAbbrechen = vorhandene Daten ergänzen');if(replace){replaceAll(items).then(function(){markDirty();renderAll()})}else{Promise.all(items.map(putOne)).then(function(){markDirty();renderAll()})}alert('Import abgeschlossen: '+items.length+' Buchungen.')}catch(e){alert('Import fehlgeschlagen: '+e.message)}$('fileInput').value=''};reader.readAsText(file,'utf-8')}
 
-function handleActionClick(e){var edit=e.target.getAttribute('data-edit'),del=e.target.getAttribute('data-del');if(edit){getAll().then(function(items){var x=items.find(function(v){return v.id===edit});if(x)openModal(x)})}if(del&&confirm('Diese Buchung löschen?')){deleteOne(del).then(renderAll)}}
+function handleActionClick(e){var edit=e.target.getAttribute('data-edit'),del=e.target.getAttribute('data-del');if(edit){getAll().then(function(items){var x=items.find(function(v){return v.id===edit});if(x)openModal(x)})}if(del&&confirm('Diese Buchung löschen?')){deleteOne(del).then(function(){markDirty();renderAll()})}}
+
+
+function remindPreviousUnbackedSession(){
+ return getAll().then(function(items){
+   if(!items.length||!backupPending())return;
+   var wants=window.confirm('Die App wurde zuletzt ohne aktuelle JSON-Sicherung beendet.\n\nMöchtest du jetzt eine JSON-Sicherung herunterladen?');
+   if(wants){exportJson()}
+   else{try{localStorage.removeItem(BACKUP_PENDING_KEY)}catch(e){};sessionDirty=false}
+ });
+}
+
+function installBackupExitReminder(){
+ document.addEventListener('pointerdown',function(){hasUserInteracted=true},{once:true});
+ document.addEventListener('keydown',function(){hasUserInteracted=true},{once:true});
+
+ window.addEventListener('beforeunload',function(e){
+   if(!sessionDirty||!hasUserInteracted)return;
+   try{localStorage.setItem(BACKUP_PENDING_KEY,'1')}catch(err){}
+   e.preventDefault();
+   e.returnValue='';
+ });
+
+ window.addEventListener('pagehide',function(){
+   if(sessionDirty){try{localStorage.setItem(BACKUP_PENDING_KEY,'1')}catch(e){}}
+ });
+}
 
 document.addEventListener('DOMContentLoaded',function(){
  initCategories();$('date').value=today();
  document.querySelectorAll('[data-page]').forEach(function(b){b.addEventListener('click',function(){switchPage(b.getAttribute('data-page'))})});
  $('openAdd').addEventListener('click',function(){openModal()});$('fab').addEventListener('click',function(){openModal()});$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('typeExpense').addEventListener('click',function(){setType('Ausgabe')});$('typeIncome').addEventListener('click',function(){setType('Einnahme')});$('category').addEventListener('change',function(){updateSubs()});$('saveBooking').addEventListener('click',saveBooking);$('bookingModal').addEventListener('click',function(e){if(e.target===$('bookingModal'))closeModal()});
  $('recentList').addEventListener('click',handleActionClick);$('bookingTable').addEventListener('click',handleActionClick);$('searchInput').addEventListener('input',renderAll);$('typeFilter').addEventListener('change',renderAll);$('categoryFilter').addEventListener('change',renderAll);
- $('exportJson').addEventListener('click',exportJson);$('exportCsv').addEventListener('click',exportCsv);$('importBtn').addEventListener('click',function(){$('fileInput').click()});$('fileInput').addEventListener('change',function(){if(this.files&&this.files[0])importFile(this.files[0])});$('clearBtn').addEventListener('click',function(){clearAll(true).then(function(ok){if(ok)renderAll()})});
- initStorage().then(renderAll);
+ $('exportJson').addEventListener('click',exportJson);$('exportCsv').addEventListener('click',exportCsv);$('importBtn').addEventListener('click',function(){$('fileInput').click()});$('fileInput').addEventListener('change',function(){if(this.files&&this.files[0])importFile(this.files[0])});$('clearBtn').addEventListener('click',function(){clearAll(true).then(function(ok){if(ok){markBackedUp();renderAll()}})});
+ installBackupExitReminder();
+  initStorage().then(function(){renderAll();remindPreviousUnbackedSession()});
 });
 })();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (err) {
+      console.error('Service Worker konnte nicht registriert werden:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
