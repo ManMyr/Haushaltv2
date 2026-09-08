@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Haushaltsbuch</title>
+<style>
+:root{--bg:#f3f6fa;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--nav:#0f172a;--blue:#2563eb;--green:#15803d;--red:#dc2626;--amber:#d97706;--shadow:0 10px 28px rgba(15,23,42,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,select{font:inherit}.hidden{display:none!important}
+.app{min-height:100vh;display:grid;grid-template-columns:240px 1fr}.sidebar{background:var(--nav);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh}.brand{display:flex;gap:10px;align-items:center;margin-bottom:28px}.logo{width:42px;height:42px;border-radius:13px;background:#2563eb;display:grid;place-items:center;font-weight:800}.brand h1{font-size:18px;margin:0}.brand small{color:#94a3b8}.nav{display:grid;gap:7px}.nav button{border:0;background:transparent;color:#cbd5e1;text-align:left;padding:11px 12px;border-radius:11px;cursor:pointer}.nav button.active,.nav button:hover{background:#1e293b;color:#fff}.side-status{position:absolute;left:16px;right:16px;bottom:16px;border:1px solid #334155;background:#111827;border-radius:12px;padding:11px;font-size:12px;color:#cbd5e1}
+main{padding:24px;max-width:1500px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:20px}.top h2{margin:0;font-size:28px}.top p{margin:5px 0 0;color:var(--muted)}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.status{border-radius:999px;padding:8px 11px;font-size:12px;background:#ecfdf5;color:#166534;border:1px solid #bbf7d0}.status.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}.btn{border:0;border-radius:11px;padding:10px 14px;font-weight:700;cursor:pointer}.btn.primary{background:var(--blue);color:#fff}.btn.soft{background:#eef2f7;color:var(--text)}.btn.danger{background:#fef2f2;color:#b91c1c}.btn:active{transform:translateY(1px)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:var(--shadow)}.metric-label{font-size:12px;color:var(--muted);margin-bottom:7px}.metric{font-size:25px;font-weight:800}.green{color:var(--green)}.red{color:var(--red)}.muted{color:var(--muted)}.small{font-size:12px}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:16px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.section-head h3{font-size:17px;margin:0}.section-head span{font-size:12px;color:var(--muted)}.bar{height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden}.bar>div{height:100%;width:0;background:#2563eb}.row-between{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px;margin-top:8px}.notice{padding:10px 12px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px;line-height:1.45}
+.txlist{display:grid}.tx{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}.tx:last-child{border-bottom:0}.ico{width:38px;height:38px;border-radius:11px;background:#eff6ff;color:#2563eb;display:grid;place-items:center;font-weight:800}.tx strong{display:block;font-size:14px}.tx small{color:var(--muted)}.amount{font-weight:800;white-space:nowrap}.tx-actions{display:flex;gap:5px}.icon-btn{border:0;background:#f1f5f9;border-radius:9px;padding:7px 9px;cursor:pointer}.empty{color:var(--muted);font-size:14px;padding:14px 0}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar input,.toolbar select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px}.toolbar input{min-width:220px;flex:1}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:850px;background:#fff}th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#f8fafc;color:#475569;position:sticky;top:0}td.num{text-align:right;font-weight:700}
+.data-buttons{display:flex;gap:9px;flex-wrap:wrap}.format-help{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f8fafc;border:1px solid var(--line);padding:8px;border-radius:9px;display:block;overflow:auto}
+.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.category{border:1px solid var(--line);background:#f8fafc;border-radius:12px;padding:12px}.category strong{display:block;font-size:13px;margin-bottom:3px}.category span{font-size:12px;color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:100;align-items:center;justify-content:center;padding:16px}.modal.open{display:flex}.modal-card{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(15,23,42,.28)}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.modal-head h3{margin:0}.close{border:0;background:#f1f5f9;border-radius:10px;width:36px;height:36px;cursor:pointer}.toggle{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;border-radius:11px;padding:4px;margin-bottom:12px}.toggle button{border:0;background:transparent;padding:9px;border-radius:8px;cursor:pointer}.toggle button.active{background:#fff;font-weight:700;box-shadow:0 2px 8px rgba(15,23,42,.08)}.form{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted)}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.mobile-nav,.fab{display:none}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.category-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.app{display:block}.sidebar{display:none}main{padding:15px 12px 86px}.top{align-items:flex-start}.top h2{font-size:23px}.actions .desktop-add{display:none}.cards{gap:9px}.card{padding:14px}.metric{font-size:21px}.category-grid{grid-template-columns:1fr}.tx{grid-template-columns:38px 1fr auto}.tx-actions{grid-column:2/-1;justify-content:flex-end}.mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:70;padding:7px 5px max(7px,env(safe-area-inset-bottom))}.mobile-nav button{border:0;background:transparent;color:#64748b;padding:6px 2px;font-size:11px}.mobile-nav button.active{color:#2563eb;font-weight:700}.fab{display:grid;place-items:center;position:fixed;right:17px;bottom:73px;width:56px;height:56px;border-radius:50%;border:0;background:#2563eb;color:#fff;font-size:28px;z-index:71;box-shadow:0 10px 25px rgba(37,99,235,.35)}.form{grid-template-columns:1fr}.field.full{grid-column:auto}.toolbar input{min-width:100%}}
+@media(max-width:430px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">HB</div><div><h1>Haushaltsbuch</h1><small>Local First</small></div></div>
+  <nav class="nav">
+    <button data-page="dashboard" class="active">◫ Dashboard</button>
+    <button data-page="bookings">▤ Buchungen</button>
+    <button data-page="data">⇅ Import / Export</button>
+    <button data-page="categories">◎ Kategorien</button>
+  </nav>
+  <div class="side-status" id="sideStatus">Speicher wird geprüft …</div>
+</aside>
+
+<main>
+  <header class="top">
+    <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Dein Haushaltsbuch auf diesem Gerät.</p></div>
+    <div class="actions"><span id="storageStatus" class="status">Speicher wird geprüft …</span><button class="btn primary desktop-add" id="openAdd">+ Neue Buchung</button></div>
+  </header>
+
+  <section id="page-dashboard" class="page">
+    <div class="cards">
+      <article class="card"><div class="metric-label">Ausgaben</div><div id="mExpenses" class="metric red">0,00 €</div><div class="small muted">alle gespeicherten Buchungen</div></article>
+      <article class="card"><div class="metric-label">Einnahmen</div><div id="mIncome" class="metric green">0,00 €</div><div class="small muted">alle gespeicherten Buchungen</div></article>
+      <article class="card"><div class="metric-label">Saldo</div><div id="mBalance" class="metric">0,00 €</div><div class="small muted">Einnahmen minus Ausgaben</div></article>
+      <article class="card"><div class="metric-label">Budget verfügbar</div><div id="mBudget" class="metric">2.700,00 €</div><div class="small muted">Beispielbudget 2.700 €</div></article>
+    </div>
+    <div class="grid2">
+      <article class="card"><div class="section-head"><h3>Budget</h3><span id="budgetLabel">0 € von 2.700 €</span></div><div class="bar"><div id="budgetBar"></div></div><div class="row-between"><span id="budgetPct">0 % genutzt</span><span id="budgetRest">2.700 € verfügbar</span></div></article>
+      <article class="card"><div class="section-head"><h3>Speicherstatus</h3><span>Local First</span></div><div class="notice" id="storageNotice">Die lokale Speicherung wird gerade initialisiert.</div></article>
+    </div>
+    <article class="card"><div class="section-head"><h3>Letzte Buchungen</h3><span id="countLabel">0 Buchungen</span></div><div id="recentList" class="txlist"><div class="empty">Noch keine Buchungen vorhanden.</div></div></article>
+  </section>
+
+  <section id="page-bookings" class="page hidden">
+    <article class="card">
+      <div class="section-head"><h3>Alle Buchungen</h3><span id="bookingTotal">0 Einträge</span></div>
+      <div class="toolbar"><input id="searchInput" placeholder="Suchen nach Händler, Beschreibung, Kategorie …"><select id="typeFilter"><option value="">Alle Typen</option><option>Ausgabe</option><option>Einnahme</option></select><select id="categoryFilter"><option value="">Alle Kategorien</option></select></div>
+      <div class="table-wrap"><table><thead><tr><th>Datum</th><th>Typ</th><th>Händler / Beschreibung</th><th>Kategorie</th><th>Unterkategorie</th><th>Zahlungsart</th><th>Betrag</th><th>Aktion</th></tr></thead><tbody id="bookingTable"></tbody></table></div>
+    </article>
+  </section>
+
+  <section id="page-data" class="page hidden">
+    <article class="card">
+      <div class="section-head"><h3>Daten sichern & übertragen</h3><span>offlinefähig</span></div>
+      <p class="muted">JSON ist das vollständige Backup. CSV kann direkt in Excel geöffnet und wieder importiert werden. Diese Version benötigt dafür keine externe Bibliothek.</p>
+      <div class="data-buttons"><button class="btn primary" id="exportJson">JSON-Backup exportieren</button><button class="btn soft" id="exportCsv">CSV für Excel exportieren</button><button class="btn soft" id="importBtn">JSON / CSV importieren</button><button class="btn danger" id="clearBtn">Alle Daten löschen</button></div>
+      <input id="fileInput" type="file" accept=".json,.csv,application/json,text/csv" class="hidden">
+      <div class="format-help">CSV-Spalten:<span class="code">ID;Typ;Datum;Betrag;Hauptkategorie;Unterkategorie;Beschreibung;Haendler;Zahlungsart</span></div>
+    </article>
+  </section>
+
+  <section id="page-categories" class="page hidden">
+    <article class="card"><div class="section-head"><h3>Kategorien & Unterkategorien</h3><span>Startbestand</span></div><div id="categoryGrid" class="category-grid"></div></article>
+  </section>
+</main>
+</div>
+
+<button class="fab" id="fab">+</button>
+<nav class="mobile-nav"><button data-page="dashboard" class="active">⌂<br>Start</button><button data-page="bookings">▤<br>Buchungen</button><button data-page="data">⇅<br>Daten</button><button data-page="categories">◎<br>Kategorien</button></nav>
+
+<div class="modal" id="bookingModal">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modalTitle">Neue Buchung</h3><button class="close" id="closeModal">×</button></div>
+    <div class="toggle"><button id="typeExpense" class="active">Ausgabe</button><button id="typeIncome">Einnahme</button></div>
+    <div class="form">
+      <div class="field"><label>Betrag</label><input id="amount" inputmode="decimal" type="number" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="field"><label>Datum</label><input id="date" type="date"></div>
+      <div class="field"><label>Hauptkategorie</label><select id="category"></select></div>
+      <div class="field"><label>Unterkategorie</label><select id="subcategory"></select></div>
+      <div class="field full"><label>Beschreibung / Verwendungszweck</label><input id="description" placeholder="z. B. Wocheneinkauf"></div>
+      <div class="field"><label>Händler / Empfänger</label><input id="merchant" placeholder="z. B. EDEKA"></div>
+      <div class="field"><label>Zahlungsart</label><select id="payment"><option>Girocard / EC</option><option>Kreditkarte</option><option>PayPal</option><option>Bar</option><option>Überweisung</option><option>Lastschrift</option><option>Sonstiges</option></select></div>
+    </div>
+    <div class="modal-actions"><button class="btn soft" id="cancelModal">Abbrechen</button><button class="btn primary" id="saveBooking">Speichern</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var DB_NAME='HaushaltsbuchDB';
+var STORE='transactions';
+var LS_KEY='haushaltsbuch_fallback_v4';
+var MONTHLY_BUDGET=2700;
+var db=null;
+var storageMode='memory';
+var memoryData=[];
+var editingId=null;
+var bookingType='Ausgabe';
+
+var CATEGORIES={
+ 'Lebensmittel & Haushalt':['Lebensmittel','Drogerie','Mittagessen / Verpflegung','Haushaltswaren'],
+ 'Einrichtung':['Möbel','Dekoration','Elektrogeräte','Renovierung','Sonstige Einrichtung'],
+ 'Bekleidung':['Kleidung','Schuhe','Accessoires'],
+ 'Sonstiges / Lifestyle':['Abonnements','Elektronik','Geschenke','Sonstiges'],
+ 'Freizeit':['Urlaub','Ausgehen','Veranstaltungen','Hobby'],
+ 'Gesundheit':['Arzt','Zahnarzt','Apotheke / Medikamente','Sehhilfe','Sonstige Gesundheitskosten'],
+ 'Mobilität':['Auto','Kraftstoff / Laden','ÖPNV','Bahn','Taxi','Fahrrad','Parken','Reparatur / Wartung'],
+ 'Wohnen':['Miete','Nebenkosten','Strom','Gas','Wasser','Internetanbieter','Mobilfunk / Handy','Rundfunkbeitrag','Sonstige Wohnkosten'],
+ 'Versicherungen / Altersvorsorge / Finanzen':['Versicherungen','Altersvorsorge','Bankgebühren','Kredite / Darlehen','Sparen / Geldanlage','Sonstige Finanzkosten']
+};
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function money(v){try{return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number(v)||0)}catch(e){return (Number(v)||0).toFixed(2).replace('.',',')+' €'}}
+function uid(){return 'tx-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+
+function setStorageStatus(mode){
+ storageMode=mode;
+ var text='',cls='status',notice='';
+ if(mode==='indexeddb'){text='● IndexedDB aktiv';notice='Buchungen werden dauerhaft lokal in IndexedDB gespeichert. Das ist der bevorzugte Local-First-Speicher.'}
+ else if(mode==='localstorage'){text='● LocalStorage aktiv';notice='IndexedDB ist hier nicht verfügbar. Die App nutzt LocalStorage als Fallback. Für einen Prototyp ist das ausreichend.'}
+ else{text='● Nur Sitzungsspeicher';cls='status warn';notice='Dieser Browser blockiert dauerhafte lokale Speicherung. Daten bleiben nur bis zum Schließen dieser Seite erhalten. JSON-Export unbedingt verwenden.'}
+ $('storageStatus').textContent=text;$('storageStatus').className=cls;$('sideStatus').textContent=text;$('storageNotice').textContent=notice;
+}
+
+function initStorage(){
+ return new Promise(function(resolve){
+   if(!window.indexedDB){initLocalStorage(resolve);return}
+   try{
+     var req=indexedDB.open(DB_NAME,1);
+     req.onupgradeneeded=function(e){var d=e.target.result;if(!d.objectStoreNames.contains(STORE)){d.createObjectStore(STORE,{keyPath:'id'})}};
+     req.onsuccess=function(e){db=e.target.result;setStorageStatus('indexeddb');resolve()};
+     req.onerror=function(){initLocalStorage(resolve)};
+   }catch(e){initLocalStorage(resolve)}
+ });
+}
+function initLocalStorage(resolve){
+ try{var t='__hb_test__';localStorage.setItem(t,'1');localStorage.removeItem(t);setStorageStatus('localstorage');resolve()}
+ catch(e){setStorageStatus('memory');resolve()}
+}
+function getAll(){
+ return new Promise(function(resolve){
+   if(storageMode==='indexeddb'&&db){var tx=db.transaction(STORE,'readonly');var r=tx.objectStore(STORE).getAll();r.onsuccess=function(){resolve(r.result||[])};r.onerror=function(){resolve([])};return}
+   if(storageMode==='localstorage'){try{resolve(JSON.parse(localStorage.getItem(LS_KEY)||'[]'))}catch(e){resolve([])};return}
+   resolve(memoryData.slice());
+ });
+}
+function putOne(obj){
+ return new Promise(function(resolve,reject){
+   if(storageMode==='indexeddb'&&db){var tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(obj);tx.oncomplete=function(){resolve()};tx.onerror=function(){reject(tx.error)};return}
+   if(storageMode==='localstorage'){getAll().then(function(items){var found=false;for(var i=0;i<items.length;i++){if(items[i].id===obj.id){items[i]=obj;found=true;break}}if(!found)items.push(obj);try{localStorage.setItem(LS_KEY,JSON.stringify(items));resolve()}catch(e){reject(e)}});return}
+   var f=false;for(var j=0;j<memoryData.length;j++){if(memoryData[j].id===obj.id){memoryData[j]=obj;f=true;break}}if(!f)memoryData.push(obj);resolve();
+ });
+}
+function replaceAll(items){
+ return clearAll(false).then(function(){return Promise.all(items.map(putOne))})
+}
+function deleteOne(id){
+ return new Promise(function(resolve){
+   if(storageMode==='indexeddb'&&db){var tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id);tx.oncomplete=function(){resolve()};tx.onerror=function(){resolve()};return}
+   if(storageMode==='localstorage'){getAll().then(function(items){items=items.filter(function(x){return x.id!==id});localStorage.setItem(LS_KEY,JSON.stringify(items));resolve()});return}
+   memoryData=memoryData.filter(function(x){return x.id!==id});resolve();
+ });
+}
+function clearAll(confirmFirst){
+ return new Promise(function(resolve){
+   if(confirmFirst!==false&&!window.confirm('Wirklich alle lokal gespeicherten Buchungen löschen?')){resolve(false);return}
+   if(storageMode==='indexeddb'&&db){var tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=function(){resolve(true)};tx.onerror=function(){resolve(false)};return}
+   if(storageMode==='localstorage'){localStorage.removeItem(LS_KEY);resolve(true);return}
+   memoryData=[];resolve(true);
+ });
+}
+
+function initCategories(){
+ var cat=$('category'),filter=$('categoryFilter'),grid=$('categoryGrid');cat.innerHTML='';filter.innerHTML='<option value="">Alle Kategorien</option>';grid.innerHTML='';
+ Object.keys(CATEGORIES).forEach(function(name){var o=document.createElement('option');o.textContent=name;cat.appendChild(o);var f=document.createElement('option');f.textContent=name;filter.appendChild(f);grid.innerHTML+='<div class="category"><strong>'+esc(name)+'</strong><span>'+esc(CATEGORIES[name].join(', '))+'</span></div>'});
+ updateSubs();
+}
+function updateSubs(selected){var arr=CATEGORIES[$('category').value]||['Sonstiges'];$('subcategory').innerHTML='';arr.forEach(function(s){var o=document.createElement('option');o.textContent=s;if(s===selected)o.selected=true;$('subcategory').appendChild(o)})}
+
+function openModal(obj){
+ editingId=obj?obj.id:null;bookingType=obj?obj.type:'Ausgabe';$('modalTitle').textContent=obj?'Buchung bearbeiten':'Neue Buchung';
+ $('amount').value=obj?obj.amount:'';$('date').value=obj?obj.date:today();$('description').value=obj?obj.description||'':'';$('merchant').value=obj?obj.merchant||'':'';$('payment').value=obj?obj.payment||'Girocard / EC':'Girocard / EC';
+ if(obj&&CATEGORIES[obj.category])$('category').value=obj.category;else $('category').selectedIndex=0;updateSubs(obj?obj.subcategory:null);setType(bookingType);$('bookingModal').classList.add('open');setTimeout(function(){$('amount').focus()},100);
+}
+function closeModal(){$('bookingModal').classList.remove('open')}
+function setType(t){bookingType=t;$('typeExpense').classList.toggle('active',t==='Ausgabe');$('typeIncome').classList.toggle('active',t==='Einnahme')}
+function saveBooking(){
+ var amount=parseFloat(String($('amount').value).replace(',','.'));if(!amount||amount<=0){alert('Bitte einen Betrag größer 0 eingeben.');return}if(!$('date').value){alert('Bitte ein Datum auswählen.');return}
+ var obj={id:editingId||uid(),type:bookingType,amount:amount,date:$('date').value,category:$('category').value,subcategory:$('subcategory').value,description:$('description').value.trim(),merchant:$('merchant').value.trim(),payment:$('payment').value,updatedAt:new Date().toISOString()};
+ putOne(obj).then(function(){closeModal();renderAll()}).catch(function(e){alert('Speichern fehlgeschlagen: '+(e&&e.message?e.message:e))});
+}
+
+function renderAll(){
+ getAll().then(function(items){items.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))});renderMetrics(items);renderRecent(items);renderTable(items)})
+}
+function renderMetrics(items){var ex=0,inc=0;items.forEach(function(x){if(x.type==='Einnahme')inc+=Number(x.amount)||0;else ex+=Number(x.amount)||0});var bal=inc-ex,rest=MONTHLY_BUDGET-ex,p=Math.max(0,Math.min(100,(ex/MONTHLY_BUDGET)*100));$('mExpenses').textContent=money(ex);$('mIncome').textContent=money(inc);$('mBalance').textContent=(bal>=0?'+':'')+money(bal);$('mBalance').className='metric '+(bal>=0?'green':'red');$('mBudget').textContent=money(rest);$('mBudget').className='metric '+(rest<0?'red':'');$('budgetLabel').textContent=money(ex)+' von '+money(MONTHLY_BUDGET);$('budgetBar').style.width=p+'%';$('budgetPct').textContent=Math.round(p)+' % genutzt';$('budgetRest').textContent=money(rest)+' verfügbar';$('countLabel').textContent=items.length+' Buchungen';$('bookingTotal').textContent=items.length+' Einträge'}
+function renderRecent(items){var box=$('recentList');if(!items.length){box.innerHTML='<div class="empty">Noch keine Buchungen vorhanden.</div>';return}box.innerHTML=items.slice(0,8).map(function(x){var label=x.merchant||x.description||x.subcategory||x.category;return '<div class="tx"><div class="ico">'+esc((label||'?').charAt(0).toUpperCase())+'</div><div><strong>'+esc(label)+'</strong><small>'+esc(x.category)+' · '+esc(x.subcategory)+' · '+esc(x.date)+'</small></div><div class="amount '+(x.type==='Einnahme'?'green':'red')+'">'+(x.type==='Einnahme'?'+':'−')+money(x.amount)+'</div><div class="tx-actions"><button class="icon-btn" data-edit="'+esc(x.id)+'">✎</button><button class="icon-btn" data-del="'+esc(x.id)+'">×</button></div></div>'}).join('')}
+function renderTable(items){var q=$('searchInput').value.toLowerCase().trim(),t=$('typeFilter').value,c=$('categoryFilter').value;var filtered=items.filter(function(x){if(t&&x.type!==t)return false;if(c&&x.category!==c)return false;if(q){var hay=[x.merchant,x.description,x.category,x.subcategory,x.payment].join(' ').toLowerCase();if(hay.indexOf(q)<0)return false}return true});var body=$('bookingTable');if(!filtered.length){body.innerHTML='<tr><td colspan="8" class="muted">Keine Buchungen gefunden.</td></tr>';return}body.innerHTML=filtered.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.merchant||x.description||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.subcategory)+'</td><td>'+esc(x.payment||'—')+'</td><td class="num '+(x.type==='Einnahme'?'green':'red')+'">'+(x.type==='Einnahme'?'+':'−')+money(x.amount)+'</td><td><button class="icon-btn" data-edit="'+esc(x.id)+'">✎</button> <button class="icon-btn" data-del="'+esc(x.id)+'">×</button></td></tr>'}).join('')}
+
+function switchPage(page){document.querySelectorAll('.page').forEach(function(p){p.classList.add('hidden')});$('page-'+page).classList.remove('hidden');document.querySelectorAll('[data-page]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')===page)});var titles={dashboard:['Dashboard','Dein Haushaltsbuch auf diesem Gerät.'],bookings:['Buchungen','Suchen, filtern, bearbeiten und löschen.'],data:['Import / Export','Daten sichern oder von einem anderen Gerät übernehmen.'],categories:['Kategorien','Übersicht der Haupt- und Unterkategorien.']};$('pageTitle').textContent=titles[page][0];$('pageSubtitle').textContent=titles[page][1]}
+
+function download(name,content,type){var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},500)}
+function exportJson(){getAll().then(function(items){download('haushaltsbuch-backup-'+today()+'.json',JSON.stringify({app:'Haushaltsbuch',version:4,exportedAt:new Date().toISOString(),transactions:items},null,2),'application/json')})}
+function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}
+function exportCsv(){getAll().then(function(items){var rows=[['ID','Typ','Datum','Betrag','Hauptkategorie','Unterkategorie','Beschreibung','Haendler','Zahlungsart']];items.forEach(function(x){rows.push([x.id,x.type,x.date,String(Number(x.amount||0).toFixed(2)).replace('.',','),x.category,x.subcategory,x.description||'',x.merchant||'',x.payment||''])});var text='\ufeff'+rows.map(function(r){return r.map(csvCell).join(';')}).join('\n');download('haushaltsbuch-'+today()+'.csv',text,'text/csv;charset=utf-8')})}
+function parseCsv(text){text=text.replace(/^\uFEFF/,'');var first=(text.split(/\r?\n/)[0]||''),delimiter=(first.split(';').length>=first.split(',').length)?';':',';var rows=[],row=[],cell='',quote=false;for(var i=0;i<text.length;i++){var ch=text[i];if(ch==='"'){if(quote&&text[i+1]==='"'){cell+='"';i++}else quote=!quote}else if(ch===delimiter&&!quote){row.push(cell);cell=''}else if((ch==='\n'||ch==='\r')&&!quote){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);rows.push(row);row=[];cell=''}else cell+=ch}if(cell||row.length){row.push(cell);rows.push(row)}return rows.filter(function(r){return r.some(function(c){return String(c).trim()!==''})})}
+function normAmount(v){if(typeof v==='number')return v;var s=String(v||'').trim().replace(/\s/g,'').replace(/€/g,'');if(s.indexOf(',')>=0){s=s.replace(/\./g,'').replace(',','.')}return Number(s)||0}
+function normalize(obj){var get=function(){for(var i=0;i<arguments.length;i++){var k=arguments[i];if(obj[k]!=null&&String(obj[k]).trim()!=='')return obj[k]}return''};var d=String(get('Datum','datum','Date','date')||today()).trim();if(/^\d{2}\.\d{2}\.\d{4}$/.test(d)){var p=d.split('.');d=p[2]+'-'+p[1]+'-'+p[0]}return{id:String(get('ID','id')||uid()),type:String(get('Typ','type')||'Ausgabe').trim()==='Einnahme'?'Einnahme':'Ausgabe',date:/^\d{4}-\d{2}-\d{2}/.test(d)?d.slice(0,10):today(),amount:normAmount(get('Betrag','betrag','amount')),category:String(get('Hauptkategorie','Kategorie','category')||'Sonstiges / Lifestyle').trim(),subcategory:String(get('Unterkategorie','subcategory')||'Sonstiges').trim(),description:String(get('Beschreibung','description')||'').trim(),merchant:String(get('Haendler','Händler','Händler/Empfänger','merchant')||'').trim(),payment:String(get('Zahlungsart','payment')||'Sonstiges').trim(),updatedAt:new Date().toISOString()}}
+function importFile(file){var reader=new FileReader();reader.onload=function(){try{var rows=[];if(file.name.toLowerCase().endsWith('.json')){var d=JSON.parse(reader.result);rows=Array.isArray(d)?d:(d.transactions||[])}else{var raw=parseCsv(reader.result);if(raw.length<2)throw new Error('Keine Datenzeilen gefunden');var headers=raw[0].map(function(h){return String(h).trim()});rows=raw.slice(1).map(function(r){var o={};headers.forEach(function(h,i){o[h]=r[i]||''});return o})}var items=rows.map(normalize).filter(function(x){return x.amount>0});if(!items.length)throw new Error('Keine gültigen Buchungen erkannt');var replace=confirm(items.length+' gültige Buchungen erkannt.\n\nOK = vorhandene Daten ersetzen\nAbbrechen = vorhandene Daten ergänzen');if(replace){replaceAll(items).then(renderAll)}else{Promise.all(items.map(putOne)).then(renderAll)}alert('Import abgeschlossen: '+items.length+' Buchungen.')}catch(e){alert('Import fehlgeschlagen: '+e.message)}$('fileInput').value=''};reader.readAsText(file,'utf-8')}
+
+function handleActionClick(e){var edit=e.target.getAttribute('data-edit'),del=e.target.getAttribute('data-del');if(edit){getAll().then(function(items){var x=items.find(function(v){return v.id===edit});if(x)openModal(x)})}if(del&&confirm('Diese Buchung löschen?')){deleteOne(del).then(renderAll)}}
+
+document.addEventListener('DOMContentLoaded',function(){
+ initCategories();$('date').value=today();
+ document.querySelectorAll('[data-page]').forEach(function(b){b.addEventListener('click',function(){switchPage(b.getAttribute('data-page'))})});
+ $('openAdd').addEventListener('click',function(){openModal()});$('fab').addEventListener('click',function(){openModal()});$('closeModal').addEventListener('click',closeModal);$('cancelModal').addEventListener('click',closeModal);$('typeExpense').addEventListener('click',function(){setType('Ausgabe')});$('typeIncome').addEventListener('click',function(){setType('Einnahme')});$('category').addEventListener('change',function(){updateSubs()});$('saveBooking').addEventListener('click',saveBooking);$('bookingModal').addEventListener('click',function(e){if(e.target===$('bookingModal'))closeModal()});
+ $('recentList').addEventListener('click',handleActionClick);$('bookingTable').addEventListener('click',handleActionClick);$('searchInput').addEventListener('input',renderAll);$('typeFilter').addEventListener('change',renderAll);$('categoryFilter').addEventListener('change',renderAll);
+ $('exportJson').addEventListener('click',exportJson);$('exportCsv').addEventListener('click',exportCsv);$('importBtn').addEventListener('click',function(){$('fileInput').click()});$('fileInput').addEventListener('change',function(){if(this.files&&this.files[0])importFile(this.files[0])});$('clearBtn').addEventListener('click',function(){clearAll(true).then(function(ok){if(ok)renderAll()})});
+ initStorage().then(renderAll);
+});
+})();
+</script>
+</body>
+</html>
