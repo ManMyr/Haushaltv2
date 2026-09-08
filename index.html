@@ -8,6 +8,8 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="Haushaltsbuch">
 <title>Haushaltsbuch</title>
 <style>
 :root{--bg:#f3f6fa;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--nav:#0f172a;--blue:#2563eb;--green:#15803d;--red:#dc2626;--amber:#d97706;--shadow:0 10px 28px rgba(15,23,42,.08)}
@@ -41,7 +43,7 @@ main{padding:24px;max-width:1500px;width:100%;margin:auto}.top{display:flex;just
 <main>
   <header class="top">
     <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Dein Haushaltsbuch auf diesem Gerät.</p></div>
-    <div class="actions"><span id="storageStatus" class="status">Speicher wird geprüft …</span><button class="btn primary desktop-add" id="openAdd">+ Neue Buchung</button></div>
+    <div class="actions"><span id="storageStatus" class="status">Speicher wird geprüft …</span><button class="btn soft" id="installAppBtn" hidden>App installieren</button><button class="btn primary desktop-add" id="openAdd">+ Neue Buchung</button></div>
   </header>
 
   <section id="page-dashboard" class="page">
@@ -273,6 +275,49 @@ document.addEventListener('DOMContentLoaded',function(){
  installBackupExitReminder();
   initStorage().then(function(){renderAll();remindPreviousUnbackedSession()});
 });
+})();
+</script>
+
+<script>
+(function(){
+  var deferredInstallPrompt = null;
+  var installButton = document.getElementById('installAppBtn');
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone === true;
+  }
+
+  function updateInstallButton(){
+    if(!installButton) return;
+    installButton.hidden = isStandalone() || !deferredInstallPrompt;
+  }
+
+  window.addEventListener('beforeinstallprompt', function(event){
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallButton();
+  });
+
+  if(installButton){
+    installButton.addEventListener('click', function(){
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function(){
+        deferredInstallPrompt = null;
+        updateInstallButton();
+      });
+    });
+  }
+
+  window.addEventListener('appinstalled', function(){
+    deferredInstallPrompt = null;
+    updateInstallButton();
+  });
+
+  window.matchMedia('(display-mode: standalone)').addEventListener?.('change', updateInstallButton);
+  updateInstallButton();
 })();
 </script>
 

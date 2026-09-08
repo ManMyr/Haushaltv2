@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'haushaltsbuch-pwa-v1';
+const CACHE_NAME = 'haushaltsbuch-pwa-v6';
 
 // Nur Dateien, die beim Installieren des Service Workers zwingend
 // vorhanden sein müssen. Icons werden bei Nutzung automatisch gecacht.
