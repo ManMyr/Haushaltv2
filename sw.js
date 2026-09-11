@@ -1,19 +1,13 @@
 'use strict';
 
-const CACHE_NAME = 'haushaltsbuch-pwa-v7';
+const CACHE_NAME = 'haushaltsbuch-pwa-v14';
 
 // Nur Dateien, die beim Installieren des Service Workers zwingend
 // vorhanden sein müssen. Icons werden bei Nutzung automatisch gecacht.
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png',
-  './icons/favicon-32.png',
-  './icons/favicon-16.png'
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
